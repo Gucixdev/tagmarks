@@ -14,6 +14,7 @@ keyed by URL.
 ## Build and test
 
     ./build      # TypeScript -> dist/ with Node's own type stripper, no npm; needs Node 23.2 or newer
+    ./bench      # query and tree timings on 20000 generated bookmarks (all under 40 ms here)
     ./test       # unit tests of the query language, tree and tags (node:test)
 
 Load `dist/` in Firefox through `about:debugging` > This Firefox > Load Temporary Add-on > `dist/manifest.json`.

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# bench - time the query engine and the tree on a generated bookmark set (default 20000). Prints ms per operation.
+cd "$(dirname "$(readlink -f "$0")")" || exit 1
+N="${1:-20000}"
+exec node --disable-warning=ExperimentalWarning -e '
+import("./src/query.ts").then(async (q) => {
+  const t = await import("./src/tree.ts");
+  const n = Number(process.argv[1]);
+  const words = ["godot","rust","blender","docs","wiki","game","tutorial","manual","book","cat"];
+  const all = Array.from({ length: n }, (_, i) => ({ id: String(i), title: words[i % 10] + " " + words[(i * 7) % 10] + " " + i,
+    url: "https://" + words[(i * 3) % 10] + ".example/" + i, folder: "f" + (i % 50), tags: [words[i % 10] + "/" + words[(i * 3) % 10], "t" + (i % 40)] }));
+  const time = (name, f) => { f(); const t0 = performance.now(); const r = f(); console.log(name.padEnd(34), (performance.now() - t0).toFixed(1).padStart(8), "ms", "(" + (Array.isArray(r) ? r.length : r.total) + " hits)"); };
+  console.log(n, "bookmarks");
+  time("free text", () => q.search(all, "tutorial"));
+  time("tag + not", () => q.search(all, "#godot -#t3"));
+  time("or + url + phrase", () => q.search(all, "(#rust OR url:cat) \"manual rust\""));
+  time("saved query chain", () => q.search(all, "@a", { a: "@b -#t1", b: "#docs OR #wiki" }));
+  time("tree of all", () => t.groupByTag(all));
+  time("tree of a search", () => t.groupByTag(q.search(all, "#book")));
+});' "$N"

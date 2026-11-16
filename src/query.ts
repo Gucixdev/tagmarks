@@ -87,6 +87,12 @@ const hasTag = (tags: string[], v: string) => tags.some((t) => { const x = t.toL
 // Saved queries, by lower-case name; `@name` in a query stands for the saved query's text.
 export type Saved = Record<string, string>;
 const MAX_DEPTH = 8;
+const parsed = new Map<string, Node>();          // a saved query is parsed once, not once per bookmark
+function parseCached(text: string): Node {
+  let n = parsed.get(text);
+  if (!n) { if (parsed.size > 500) parsed.clear(); n = parse(text); parsed.set(text, n); }
+  return n;
+}
 
 export function matches(b: Bookmark, n: Node, saved: Saved = {}, depth = 0): boolean {
   switch (n.t) {
@@ -98,7 +104,7 @@ export function matches(b: Bookmark, n: Node, saved: Saved = {}, depth = 0): boo
       // an unknown name or a loop (a refers to b refers to a) matches nothing instead of hanging
       const text = Object.entries(saved).find(([k]) => k.toLowerCase() === n.name)?.[1];
       if (text === undefined || depth >= MAX_DEPTH) return false;
-      return matches(b, parse(text), saved, depth + 1);
+      return matches(b, parseCached(text), saved, depth + 1);
     }
     case 'term': {
       const v = n.value;

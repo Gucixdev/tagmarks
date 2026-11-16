@@ -8,6 +8,7 @@ export const UNTAGGED = '(untagged)';
 
 export function groupByTag(list: Bookmark[]): Group {
   const root: Group = { name: '', path: '', items: [], kids: [], total: 0 };
+  const members = new Map<Group, Set<Bookmark>>();      // O(1) 'already in this group' instead of scanning items
   const find = (g: Group, parts: string[]): Group => {
     let cur = g;
     for (const part of parts) {
@@ -25,7 +26,9 @@ export function groupByTag(list: Bookmark[]): Group {
       const parts = t.split('/').map((s) => s.trim()).filter(Boolean);
       if (!parts.length) continue;
       const g = find(root, parts);
-      if (!g.items.includes(b)) g.items.push(b);
+      let m = members.get(g);
+      if (!m) { m = new Set(); members.set(g, m); }
+      if (!m.has(b)) { m.add(b); g.items.push(b); }
       seen.add(g.path);
     }
   }
