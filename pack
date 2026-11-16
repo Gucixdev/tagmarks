@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# pack - build, then zip dist/ into tagmarks.xpi (unsigned: load it in about:debugging, or Firefox Developer/Nightly with xpinstall.signatures.required=false).
+set -eu
+cd "$(dirname "$(readlink -f "$0")")"
+./build >/dev/null
+python3 -I - "$PWD/dist" "$PWD/tagmarks.xpi" <<'PY'
+import sys, zipfile, pathlib
+src, out = pathlib.Path(sys.argv[1]), sys.argv[2]
+with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+    for f in sorted(src.rglob("*")):
+        if f.is_file(): z.write(f, f.relative_to(src).as_posix())
+PY
+echo "wrote tagmarks.xpi ($(python3 -I -c 'import zipfile,sys;print(len(zipfile.ZipFile(sys.argv[1]).namelist()))' "tagmarks.xpi") files)"

@@ -14,6 +14,7 @@ keyed by URL.
 ## Build and test
 
     ./build      # TypeScript -> dist/ with Node's own type stripper, no npm; needs Node 23.2 or newer
+    ./pack       # dist/ zipped into tagmarks.xpi (unsigned; load via about:debugging or an unbranded build)
     ./bench      # query and tree timings on 20000 generated bookmarks (all under 40 ms here)
     ./test       # unit tests of the query language, tree and tags (node:test)
 
