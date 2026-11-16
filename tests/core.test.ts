@@ -95,3 +95,15 @@ test('export / import round trip', () => {
   assert.deepEqual([...back], [['https://a', ['a', 'b/c']], ['https://c', ['d']]]);
   assert.equal(importTags('junk\n\t\nurl\t\n').size, 0);
 });
+
+test('saved queries: @name expands, nests, ignores case, loops and unknown names match nothing', () => {
+  const saved = { 'work/docs': '#docs -#games', Fun: '#games OR folder:pets', all2: '@work/docs OR @fun', a: '@b', b: '@a' };
+  assert.equal(ids(search(L, '@work/docs', saved)), '25');
+  assert.equal(ids(search(L, '@FUN', saved)), '134');
+  assert.equal(ids(search(L, '@all2', saved)), '12345');
+  assert.equal(ids(search(L, '@work/docs rust', saved)), '5', 'a saved query combines with more terms');
+  assert.equal(ids(search(L, '-@work/docs', saved)), '134');
+  assert.equal(ids(search(L, '@nope', saved)), '');
+  assert.equal(ids(search(L, '@a', saved)), '', 'a refers to b refers to a');
+  assert.equal(ids(search(L, '@x')), '', 'no saved queries at all');
+});

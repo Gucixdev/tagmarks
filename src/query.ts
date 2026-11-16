@@ -1,4 +1,4 @@
-// Query language for bookmarks. Words are free text (title or url), `#tag` or `tag:x` match a tag (a tag also matches its
+// Query language for bookmarks. `@name` pulls in a saved query. Words are free text (title or url), `#tag` or `tag:x` match a tag (a tag also matches its
 // sub-tags: `#games` finds `games/rpg`), `url:`, `title:`, `folder:` look at one field, `-x` or `NOT x` negates,
 // `OR` joins, a space or `AND` means and, parentheses group, "double quotes" keep a phrase together.
 
@@ -9,6 +9,7 @@ export type Node =
   | { t: 'or'; a: Node; b: Node }
   | { t: 'not'; a: Node }
   | { t: 'term'; field: 'any' | 'tag' | 'url' | 'title' | 'folder'; value: string }
+  | { t: 'ref'; name: string }
   | { t: 'all' };
 
 type Tok = { k: 'word' | '(' | ')'; v: string; quoted?: boolean };
@@ -70,6 +71,7 @@ export function parse(src: string): Node {
     return term(t.v);
   }
   function term(w: string): Node {
+    if (w.startsWith('@') && w.length > 1) return { t: 'ref', name: w.slice(1).toLowerCase() };
     const m = /^(tag|url|title|folder):(.*)$/i.exec(w);
     if (m) return { t: 'term', field: m[1].toLowerCase() as 'tag', value: m[2].toLowerCase() };
     if (w.startsWith('#') && w.length > 1) return { t: 'term', field: 'tag', value: w.slice(1).toLowerCase() };
@@ -82,12 +84,22 @@ export function parse(src: string): Node {
 
 const hasTag = (tags: string[], v: string) => tags.some((t) => { const x = t.toLowerCase(); return x === v || x.startsWith(v + '/'); });
 
-export function matches(b: Bookmark, n: Node): boolean {
+// Saved queries, by lower-case name; `@name` in a query stands for the saved query's text.
+export type Saved = Record<string, string>;
+const MAX_DEPTH = 8;
+
+export function matches(b: Bookmark, n: Node, saved: Saved = {}, depth = 0): boolean {
   switch (n.t) {
     case 'all': return true;
-    case 'and': return matches(b, n.a) && matches(b, n.b);
-    case 'or': return matches(b, n.a) || matches(b, n.b);
-    case 'not': return !matches(b, n.a);
+    case 'and': return matches(b, n.a, saved, depth) && matches(b, n.b, saved, depth);
+    case 'or': return matches(b, n.a, saved, depth) || matches(b, n.b, saved, depth);
+    case 'not': return !matches(b, n.a, saved, depth);
+    case 'ref': {
+      // an unknown name or a loop (a refers to b refers to a) matches nothing instead of hanging
+      const text = Object.entries(saved).find(([k]) => k.toLowerCase() === n.name)?.[1];
+      if (text === undefined || depth >= MAX_DEPTH) return false;
+      return matches(b, parse(text), saved, depth + 1);
+    }
     case 'term': {
       const v = n.value;
       if (n.field === 'tag') return hasTag(b.tags, v);
@@ -99,7 +111,7 @@ export function matches(b: Bookmark, n: Node): boolean {
   }
 }
 
-export function search(all: Bookmark[], q: string): Bookmark[] {
+export function search(all: Bookmark[], q: string, saved: Saved = {}): Bookmark[] {
   const n = parse(q);
-  return all.filter((b) => matches(b, n));
+  return all.filter((b) => matches(b, n, saved));
 }

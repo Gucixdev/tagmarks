@@ -1,5 +1,5 @@
 // Sidebar UI of the extension. Everything the user can influence is put into the page with textContent, never innerHTML.
-import { search, type Bookmark } from './query.ts';
+import { search, type Bookmark, type Saved } from './query.ts';
 import { groupByTag, flatten, type Group } from './tree.ts';
 import { parseTags, setTags, allTags, exportTags, importTags, type TagMap } from './tags.ts';
 
@@ -9,6 +9,7 @@ type BmNode = { id: string; title?: string; url?: string; children?: BmNode[] };
 
 let tags: TagMap = {};          // keyed by URL, so tags survive a changed bookmark id and match the text export
 let all: Bookmark[] = [];
+let saved: Saved = {};          // name -> query text, `@name` in a query expands it
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const el = (tag: string, cls?: string, text?: string) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -19,8 +20,9 @@ function collect(n: BmNode, path: string[], out: Bookmark[]) {
 }
 
 async function load() {
-  const st = await browser.storage.local.get('tags');
+  const st = await browser.storage.local.get(['tags', 'saved']);
   tags = st.tags && typeof st.tags === 'object' ? st.tags : {};
+  saved = st.saved && typeof st.saved === 'object' ? st.saved : {};
   const tree: BmNode[] = await browser.bookmarks.getTree();
   all = [];
   for (const r of tree) collect(r, [], all);
@@ -76,7 +78,7 @@ function groupEl(g: Group, depth: number): HTMLElement {
 
 function render() {
   const q = ($('q') as HTMLInputElement).value;
-  const found = search(all, q);
+  const found = search(all, q, saved);
   const root = groupByTag(found);
   const box = $('tree');
   box.replaceChildren();
@@ -89,12 +91,27 @@ function render() {
     c.addEventListener('click', () => { const i = $('q') as HTMLInputElement; i.value = (i.value.trim() + ' #' + tag).trim(); render(); });
     chips.append(c);
   }
+  const sq = $('saved'); sq.replaceChildren();
+  for (const name of Object.keys(saved).sort()) {
+    const c = el('button', 'chip', '@' + name); c.title = saved[name];
+    c.addEventListener('click', () => { const i = $('q') as HTMLInputElement; i.value = (i.value.trim() + ' @' + name).trim(); render(); });
+    const x = el('button', 'chip del', '×'); x.title = 'delete saved query ' + name;
+    x.addEventListener('click', async () => { const n = { ...saved }; delete n[name]; saved = n; await browser.storage.local.set({ saved }); render(); });
+    sq.append(c, x);
+  }
   const openres = $('openres') as HTMLButtonElement; openres.disabled = !found.length;
   openres.onclick = () => openAll(found, q || 'bookmarks');
 }
 
 function wire() {
   $('q').addEventListener('input', render);
+  $('savebtn').addEventListener('click', async () => {
+    const name = ($('savename') as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, '-');
+    const q = ($('q') as HTMLInputElement).value.trim();
+    if (!name || !q || /[()"]/.test(name)) { $('status').textContent = 'type a query and a name (no quotes or brackets)'; return; }
+    saved = { ...saved, [name]: q }; await browser.storage.local.set({ saved });
+    ($('savename') as HTMLInputElement).value = ''; render();
+  });
   $('exp').addEventListener('click', () => { ($('io') as HTMLTextAreaElement).value = exportTags(tags, (u) => u); });
   $('imp').addEventListener('click', async () => {
     const m = importTags(($('io') as HTMLTextAreaElement).value);

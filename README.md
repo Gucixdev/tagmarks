@@ -7,6 +7,8 @@ keyed by URL.
 - search language: `#tag`, `-#tag`, `url:x`, `title:x`, `folder:x`, `"a phrase"`, `A OR B`, `( )`; a space means AND
 - results are shown as a tree grouped by tag; **open all** opens a group (and its sub-groups) as tabs, in a tab group when
   your Firefox has them
+- saved queries: name the current query (`work/reading`), reuse it as `@work/reading`, also inside other queries
+  (`@work/reading -#done`); a loop or unknown name matches nothing
 - tags export/import as text: one line per bookmark, `url<TAB>tag,tag`
 
 ## Build and test
@@ -21,4 +23,4 @@ Open the sidebar with Alt+B.
 
 Query language, tree and tag code are covered by tests. The sidebar page was checked in a real headless Firefox with a fake
 `browser` API (`tests/fake-browser.js`); the real bookmarks API was not exercised, and Firefox blocks automation from
-opening `moz-extension://` pages. Not done yet: per-container about:config settings, a signed release.
+opening `moz-extension://` pages. Per-container settings are a separate extension, ctxprefs. Not done yet: a signed release, nested display of saved queries.

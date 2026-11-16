@@ -4,7 +4,7 @@ body { margin: 0; padding: 8px; background: var(--bg); color: var(--fg); font: 1
 input[type=search], .tagedit, textarea { width: 100%; box-sizing: border-box; padding: 6px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; }
 button { font: inherit; background: none; color: var(--acc); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
-#chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+#chips, #saved { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 #bar { display: flex; justify-content: space-between; align-items: center; color: var(--mut); margin: 4px 0 8px; }
 summary { cursor: pointer; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
 .gname { font-weight: 600; } .count { color: var(--mut); } .openall { margin-left: auto; font-size: 11px; }
@@ -15,3 +15,4 @@ ul { list-style: none; padding: 0; margin: 2px 0 6px; }
 .title:hover { color: var(--acc); text-decoration: underline; }
 .tags { color: var(--mut); font-size: 11px; white-space: nowrap; } .edit { font-size: 11px; opacity: .6; }
 #iobox { margin-top: 12px; }
+#saved { margin: 0 0 6px; } .del { padding: 1px 4px; margin-left: -4px; color: var(--mut); } #saverow { display: flex; gap: 4px; margin-bottom: 6px; } #savename { flex: 1; padding: 3px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; }
