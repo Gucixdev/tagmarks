@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# build - turn src/*.ts into plain JS (Node's own type stripper, no npm) and put the extension into dist/.
+# Incremental: nothing is rebuilt when no source is newer than dist/sidebar.js. Exit 0 fine, 1 failed.
+set -eu
+cd "$(dirname "$(readlink -f "$0")")"
+[ -f dist/sidebar.js ] && [ -z "$(find src ext -newer dist/sidebar.js -type f -print -quit)" ] && { echo "dist is up to date"; exit 0; }
+mkdir -p dist
+for f in src/*.ts; do
+	node --disable-warning=ExperimentalWarning -e '
+const m = require("node:module"), fs = require("node:fs");
+const src = fs.readFileSync(process.argv[1], "utf8");
+fs.writeFileSync(process.argv[2], m.stripTypeScriptTypes(src, { mode: "strip" }).replace(/(from\s+["\x27]\.\/[\w-]+)\.ts(["\x27])/g, "$1.js$2"));
+' "$f" "dist/$(basename "${f%.ts}").js"
+done
+cp ext/manifest.json ext/sidebar.html ext/sidebar.css dist/
+echo "built dist/ ($(ls dist | wc -l) files)"

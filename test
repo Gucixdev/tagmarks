@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# test - run the unit tests (node:test, no deps)
+cd "$(dirname "$(readlink -f "$0")")" || exit 1
+exec node --disable-warning=ExperimentalWarning --test tests/

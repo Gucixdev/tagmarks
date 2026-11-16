@@ -1,0 +1,10 @@
+{
+  "manifest_version": 2,
+  "name": "tagmarks",
+  "version": "0.1.0",
+  "description": "Bookmarks with tags, a query language and a tree of groups you can open as tabs.",
+  "permissions": ["bookmarks", "storage", "tabs"],
+  "browser_specific_settings": { "gecko": { "id": "tagmarks@example.invalid", "strict_min_version": "115.0" } },
+  "sidebar_action": { "default_title": "tagmarks", "default_panel": "sidebar.html", "open_at_install": true },
+  "commands": { "_execute_sidebar_action": { "suggested_key": { "default": "Alt+B" } } }
+}
