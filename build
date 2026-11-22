@@ -12,5 +12,5 @@ const src = fs.readFileSync(process.argv[1], "utf8");
 fs.writeFileSync(process.argv[2], m.stripTypeScriptTypes(src, { mode: "strip" }).replace(/(from\s+["\x27]\.\/[\w-]+)\.ts(["\x27])/g, "$1.js$2"));
 ' "$f" "dist/$(basename "${f%.ts}").js"
 done
-cp ext/manifest.json ext/sidebar.html ext/sidebar.css dist/
+cp ext/* dist/
 echo "built dist/ ($(ls dist | wc -l) files)"

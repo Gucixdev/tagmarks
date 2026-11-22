@@ -20,6 +20,7 @@
   window.browser = {
     bookmarks: { getTree: async () => JSON.parse(JSON.stringify(tree)), onCreated: noop, onRemoved: noop, onChanged: noop, onMoved: noop },
     storage: { local: { get: async () => JSON.parse(JSON.stringify(store)), set: async (o) => { store = { ...store, ...JSON.parse(JSON.stringify(o)) }; window.__store = store; } } },
-    tabs: { create: async (o) => { window.__opened.push(o.url); return { id: window.__opened.length }; } },
+    runtime: { openOptionsPage: async () => { window.__opts = true; } },
+    tabs: { query: async () => [{ url: 'https://docs.godotengine.org/', title: 'Godot docs' }, { url: 'about:blank', title: '' }, { url: 'https://cats.example/', title: 'Cats' }], create: async (o) => { window.__opened.push(o.url); return { id: window.__opened.length }; } },
   };
 })()
